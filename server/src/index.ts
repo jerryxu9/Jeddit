@@ -3,6 +3,9 @@ import { __prod__ } from "./constants";
 import { Post } from "./entities/Post";
 import microConfig from "./mikro-orm.config";
 import express from "express";
+import { ApolloServer } from "apollo-server-express";
+import { buildSchema } from "type-graphql";
+import { HelloResolver } from "./resolvers/hello";
 
 const main = async () => {
   /* MikroORM setup */
@@ -15,10 +18,22 @@ const main = async () => {
     console.log("server started on localhost:4000");
   });
 
-  // just testing:
-  app.get("/", (req, res) => {
-    res.send("hi welcome to my app");
+  /* Apollo GraphQL Server setup */
+  const apolloServer = new ApolloServer({
+    /* GraphQL schema setup */
+    schema: await buildSchema({
+      resolvers: [HelloResolver],
+      validate: false,
+    }),
   });
+
+  await apolloServer.start(); // without this, apollo will throw an error
+  apolloServer.applyMiddleware({ app }); // Create a GrahQL enpoint on express
+
+  // just testing:
+  //   app.get("/", (req, res) => {
+  //     res.send("hi welcome to my app");
+  //   });
 };
 
 main().catch((err) => {
