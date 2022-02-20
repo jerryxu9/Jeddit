@@ -1,9 +1,9 @@
 import { Entity, PrimaryKey, Property } from "@mikro-orm/core";
 import { ObjectType, Field } from "type-graphql";
 
-@ObjectType() // convert this class to an object type by stacking this decorator
+@ObjectType()
 @Entity()
-export class Post {
+export class User {
   @Field()
   @PrimaryKey()
   id!: number;
@@ -16,7 +16,10 @@ export class Post {
   @Property({ type: "date", onUpdate: () => new Date() })
   updatedAt = new Date();
 
-  @Field()
+  @Field(() => String)
+  @Property({ type: "text", unique: true }) // all user names must be unique
+  username!: string;
+
   @Property({ type: "text" })
-  title!: string;
+  password!: string; // Note: password shouldn't be exposed, so no @Field decorator
 }
