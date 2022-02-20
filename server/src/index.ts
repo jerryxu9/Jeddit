@@ -1,11 +1,13 @@
+import "reflect-metadata";
 import { MikroORM } from "@mikro-orm/core";
 import { __prod__ } from "./constants";
-import { Post } from "./entities/Post";
+// import { Post } from "./entities/Post";
 import microConfig from "./mikro-orm.config";
 import express from "express";
 import { ApolloServer } from "apollo-server-express";
 import { buildSchema } from "type-graphql";
 import { HelloResolver } from "./resolvers/hello";
+import { PostResolver } from "./resolvers/post";
 
 const main = async () => {
   /* MikroORM setup */
@@ -22,9 +24,11 @@ const main = async () => {
   const apolloServer = new ApolloServer({
     /* GraphQL schema setup */
     schema: await buildSchema({
-      resolvers: [HelloResolver],
+      resolvers: [HelloResolver, PostResolver],
       validate: false,
     }),
+    // context is a special object that's accessible by all the resolvers
+    context: () => ({ em: orm.em }),
   });
 
   await apolloServer.start(); // without this, apollo will throw an error
