@@ -34,6 +34,8 @@ class FieldError {
 @ObjectType()
 class UserResponse {
   @Field(() => [FieldError], { nullable: true })
+  // ? means optional. If there is an error with the query, we can return this
+  // errors object to help us debug
   errors?: FieldError[];
 
   @Field(() => User, { nullable: true })
@@ -68,14 +70,31 @@ export class UserResolver {
         ],
       };
     }
+
     // Use argon2 to hash the password
     const hashedPassword = await argon2.hash(options.password);
-    // create and add user to the database
+    // create and add a new user to the database
     const user = em.create(User, {
       username: options.username,
       password: hashedPassword,
     });
-    await em.persistAndFlush(user);
+
+    try {
+      await em.persistAndFlush(user);
+    } catch (err) {
+      // duplicate username error
+      if (err.code === "23505") {
+        return {
+          errors: [
+            {
+              field: "username",
+              message: "username already taken",
+            },
+          ],
+        };
+      }
+    }
+
     return { user };
   }
 
@@ -83,7 +102,7 @@ export class UserResolver {
   @Mutation(() => UserResponse)
   async login(
     @Arg("options") options: UsernamePasswordInput,
-    @Ctx() { em }: MyContext
+    @Ctx() { em, req }: MyContext
   ): Promise<UserResponse> {
     const user = await em.findOne(User, { username: options.username });
     // If user not found, return error
@@ -110,7 +129,11 @@ export class UserResolver {
         ],
       };
     }
+    // we can store any data inside the session. We store the user id to tell who the user is
+    req.session.userId = user.id;
+    // console.log("session: ", req.session);
 
+    // Successfully logged in. Return user
     return {
       user,
     };
