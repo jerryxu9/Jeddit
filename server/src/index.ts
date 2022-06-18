@@ -15,6 +15,7 @@ import { UserResolver } from "./resolvers/user";
 // import Redis from "ioredis";
 import { MyContext } from "./types";
 import { ApolloServerPluginLandingPageGraphQLPlayground } from "apollo-server-core";
+import cors from "cors";
 
 const session = require("express-session");
 let RedisStore = require("connect-redis")(session);
@@ -52,6 +53,13 @@ const main = async () => {
   redisClient.connect().catch(console.error);
 
   app.use(
+    cors({
+      origin: "http://localhost:3000", // frontend port
+      credentials: true, // accept credentials
+    })
+  );
+
+  app.use(
     session({
       name: "qid",
       store: new RedisStore({
@@ -79,7 +87,7 @@ const main = async () => {
       validate: false,
     }),
     // context is a special object that's accessible by all the resolvers
-    context: ({ req, res }: MyContext) => ({ em: orm.em, req, res }),
+    context: ({ req, res }) => ({ em: orm.em, req, res }),
     plugins: [
       ApolloServerPluginLandingPageGraphQLPlayground({
         // options
@@ -88,7 +96,10 @@ const main = async () => {
   });
 
   await apolloServer.start(); // without this, apollo will throw an error
-  apolloServer.applyMiddleware({ app }); // Create a GrahQL enpoint on express
+  apolloServer.applyMiddleware({
+    app,
+    cors: false,
+  }); // Create a GrahQL enpoint on express
 
   app.listen(4000, () => {
     console.log("server started on localhost:4000");
