@@ -11,6 +11,7 @@ import {
   Ctx,
   ObjectType,
 } from "type-graphql";
+import { EntityManager } from "@mikro-orm/postgresql";
 
 /* using the InputType decorator instead of having multiple
    Arg decorator for 'register' and 'login' 
@@ -48,7 +49,7 @@ export class UserResolver {
   @Mutation(() => UserResponse)
   async register(
     @Arg("options") options: UsernamePasswordInput,
-    @Ctx() { em }: MyContext
+    @Ctx() { em, req }: MyContext
   ): Promise<UserResponse> {
     if (options.username.length <= 2) {
       return {
@@ -79,7 +80,19 @@ export class UserResolver {
       password: hashedPassword,
     });
 
+    // let user;
     try {
+      // const result = await (em as EntityManager)
+      //   .createQueryBuilder(User)
+      //   .getKnexQuery()
+      //   .insert({
+      //     username: options.username,
+      //     password: hashedPassword,
+      //     created_at: new Date(), // need to add this ourselves b/c using Knex instaed of Micro-ORM
+      //     updated_at: new Date(), // need to add this ourselves b/c using Knex instaed of Micro-ORM
+      //   })
+      //   .returning("*");
+      // user = result[0];
       await em.persistAndFlush(user);
     } catch (err) {
       // duplicate username error
@@ -95,6 +108,8 @@ export class UserResolver {
       }
     }
 
+    // store user id session. This will set a cookie on the user
+    req.session.userId = user.id;
     return { user };
   }
 
