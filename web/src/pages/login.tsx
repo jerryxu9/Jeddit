@@ -1,39 +1,28 @@
 import React from "react";
 import { Formik, Form } from "formik";
-import {
-  FormControl,
-  FormLabel,
-  Input,
-  FormErrorMessage,
-  Button,
-  Box,
-} from "@chakra-ui/react";
+import { Button, Box } from "@chakra-ui/react";
 import Wrapper from "../components/Wrapper";
 import InputField from "../components/InputField";
-import { useRegisterMutation } from "../generated/graphql";
+import { useLoginMutation, useRegisterMutation } from "../generated/graphql";
 import { toErrorMap } from "../utils/toErrorMap";
 import { useRouter } from "next/router";
 
-interface registerProps {}
-
-const Register: React.FC<registerProps> = ({}) => {
+const Login: React.FC<{}> = ({}) => {
   const router = useRouter();
-  const [, register] = useRegisterMutation(); // generated hook from graphql-code-geneartor
+  const [, login] = useLoginMutation(); // generated hook from graphql-code-geneartor
 
   return (
     <Wrapper variant="small">
       <Formik
         initialValues={{ username: "", password: "" }}
         onSubmit={async (values, { setErrors }) => {
-          const response = await register(values);
-          if (response.data?.register.errors) {
-            // response.data?.register.errors is the error returning from the user register graphql resolver
-            setErrors(toErrorMap(response.data.register.errors));
-          } else if (response.data?.register.user) {
-            // if register is successful
+          const response = await login({ options: values });
+          if (response.data?.login.errors) {
+            setErrors(toErrorMap(response.data.login.errors));
+          } else if (response.data?.login.user) {
+            // if login is successful
             router.push("/");
           }
-          // return register(values); // return a promise otherwise the submitting wheel will keep spinning
         }}
       >
         {({ isSubmitting }) => (
@@ -57,7 +46,7 @@ const Register: React.FC<registerProps> = ({}) => {
               colorScheme="teal"
               isLoading={isSubmitting}
             >
-              Register
+              Login
             </Button>
           </Form>
         )}
@@ -66,4 +55,4 @@ const Register: React.FC<registerProps> = ({}) => {
   );
 };
 
-export default Register;
+export default Login;

@@ -1,0 +1,13 @@
+# Simply using $options to insert parameters. The other way is used in register.graphql
+mutation Login($options: UsernamePasswordInput!) {
+  login(options: $options) {
+    errors {
+      field
+      message
+    }
+    user {
+      id
+      username
+    }
+  }
+}
