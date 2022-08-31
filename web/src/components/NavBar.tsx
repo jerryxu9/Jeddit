@@ -1,4 +1,4 @@
-import { Box, Flex, Link } from "@chakra-ui/react";
+import { Box, Flex, Link, Button } from "@chakra-ui/react";
 import React from "react";
 import NextLink from "next/link";
 import { useMeQuery } from "../generated/graphql";
@@ -30,7 +30,16 @@ const NavBar: React.FC<NavBarProps> = ({}) => {
   }
   // user is logged in, display welcome message
   else {
-    body = <Box textColor={"white"}>Welcome back, {data.me.username}</Box>;
+    body = (
+      <Flex>
+        <Box textColor={"white"} mr={8}>
+          Welcome back, {data.me.username}
+        </Box>
+        <Button variant="link" textColor={"white"}>
+          Logout
+        </Button>
+      </Flex>
+    );
   }
 
   return (
