@@ -1,12 +1,13 @@
 import { Box, Flex, Link, Button } from "@chakra-ui/react";
 import React from "react";
 import NextLink from "next/link";
-import { useMeQuery } from "../generated/graphql";
+import { useLogoutMutation, useMeQuery } from "../generated/graphql";
 
 interface NavBarProps {}
 
 const NavBar: React.FC<NavBarProps> = ({}) => {
-  const [{ data, fetching }] = useMeQuery();
+  const [{ fetching: logoutFetching }, logout] = useLogoutMutation();
+  const [{ data, fetching }] = useMeQuery(); // Me query returns the current user data
   let body = null;
 
   // data is loading
@@ -35,7 +36,16 @@ const NavBar: React.FC<NavBarProps> = ({}) => {
         <Box textColor={"white"} mr={8}>
           Welcome back, {data.me.username}
         </Box>
-        <Button variant="link" textColor={"white"}>
+        <Button
+          onClick={() => {
+            // only adding {} to avoid TypeScript linting problem.
+            // Still works without the {}
+            logout({});
+          }}
+          isLoading={logoutFetching}
+          variant="link"
+          textColor={"white"}
+        >
           Logout
         </Button>
       </Flex>

@@ -12,6 +12,7 @@ import {
   ObjectType,
 } from "type-graphql";
 import { EntityManager } from "@mikro-orm/postgresql";
+import { COOKIE_NAME } from "../constants";
 
 /* using the InputType decorator instead of having multiple
    Arg decorator for 'register' and 'login' 
@@ -45,6 +46,7 @@ class UserResponse {
 
 @Resolver()
 export class UserResolver {
+  // Get the current user data
   @Query(() => User, { nullable: true })
   async me(@Ctx() { req, em }: MyContext) {
     // if user id not found in session, user is not logged in
@@ -163,5 +165,23 @@ export class UserResolver {
     return {
       user,
     };
+  }
+
+  // User logout
+  @Mutation(() => Boolean)
+  logout(@Ctx() { req, res }: MyContext) {
+    return new Promise((resolve) =>
+      // remove the session in Redis and clear the cookie
+      req.session.destroy((err) => {
+        res.clearCookie(COOKIE_NAME);
+        if (err) {
+          console.log(err);
+          resolve(false);
+          return;
+        }
+
+        resolve(true);
+      })
+    );
   }
 }

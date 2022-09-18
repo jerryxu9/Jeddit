@@ -14,6 +14,7 @@ import {
   LoginMutation,
   MeQuery,
   RegisterMutation,
+  LogoutMutation,
 } from "../generated/graphql";
 
 // Wrapper function to resolve cache exchange type issue by properly casting the types. Using generic types
@@ -39,6 +40,15 @@ const client = createClient({
       // updating the cache will update the MeQuery. This is to fix the user name displaying issue when user logs in
       updates: {
         Mutation: {
+          logout: (_result, args, cache, info) => {
+            // we want Me query to return null if user logs out
+            betterUpdateQuery<LogoutMutation, MeQuery>(
+              cache,
+              { query: MeDocument },
+              _result,
+              () => ({ me: null })
+            );
+          },
           login: (_result, args, cache, info) => {
             betterUpdateQuery<LoginMutation, MeQuery>(
               cache,
