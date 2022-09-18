@@ -9,9 +9,14 @@ import {
 import { cacheExchange, Cache, QueryInput } from "@urql/exchange-graphcache";
 import theme from "../theme";
 import { AppProps } from "next/app";
-import { MeDocument, LoginMutation, MeQuery } from "../generated/graphql";
+import {
+  MeDocument,
+  LoginMutation,
+  MeQuery,
+  RegisterMutation,
+} from "../generated/graphql";
 
-// Wrapper function to resolve cache exchange type issue by properly casting the types
+// Wrapper function to resolve cache exchange type issue by properly casting the types. Using generic types
 function betterUpdateQuery<Result, Query>(
   cache: Cache,
   qi: QueryInput,
@@ -30,6 +35,8 @@ const client = createClient({
   exchanges: [
     dedupExchange,
     cacheExchange({
+      // this update will run to update the cache whenever the included mutations run
+      // updating the cache will update the MeQuery. This is to fix the user name displaying issue when user logs in
       updates: {
         Mutation: {
           login: (_result, args, cache, info) => {
@@ -40,7 +47,9 @@ const client = createClient({
               (result, query) => {
                 if (result.login.errors) {
                   return query;
-                } else {
+                }
+                // if no errors, update query
+                else {
                   return {
                     me: result.login.user,
                   };
