@@ -1,102 +1,12 @@
 import { ChakraProvider } from "@chakra-ui/react";
-import {
-  createClient,
-  dedupExchange,
-  fetchExchange,
-  Provider,
-  useMutation,
-} from "urql";
-import { cacheExchange, Cache, QueryInput } from "@urql/exchange-graphcache";
-import theme from "../theme";
 import { AppProps } from "next/app";
-import {
-  MeDocument,
-  LoginMutation,
-  MeQuery,
-  RegisterMutation,
-  LogoutMutation,
-} from "../generated/graphql";
-
-// Wrapper function to resolve cache exchange type issue by properly casting the types. Using generic types
-function betterUpdateQuery<Result, Query>(
-  cache: Cache,
-  qi: QueryInput,
-  result: any,
-  fn: (r: Result, q: Query) => Query
-) {
-  return cache.updateQuery(qi, (data) => fn(result, data as any) as any);
-}
-
-// urql client
-const client = createClient({
-  url: "http://localhost:4000/graphql",
-  fetchOptions: {
-    credentials: "include", // this will send a cookie, we need this for getting the cookie when we register/login
-  },
-  exchanges: [
-    dedupExchange,
-    cacheExchange({
-      // this update will run to update the cache whenever the included mutations run
-      // updating the cache will update the MeQuery. This is to fix the user name displaying issue when user logs in
-      updates: {
-        Mutation: {
-          logout: (_result, args, cache, info) => {
-            // we want Me query to return null if user logs out
-            betterUpdateQuery<LogoutMutation, MeQuery>(
-              cache,
-              { query: MeDocument },
-              _result,
-              () => ({ me: null })
-            );
-          },
-          login: (_result, args, cache, info) => {
-            betterUpdateQuery<LoginMutation, MeQuery>(
-              cache,
-              { query: MeDocument },
-              _result,
-              (result, query) => {
-                if (result.login.errors) {
-                  return query;
-                }
-                // if no errors, update query
-                else {
-                  return {
-                    me: result.login.user,
-                  };
-                }
-              }
-            );
-          },
-          register: (_result, args, cache, info) => {
-            betterUpdateQuery<RegisterMutation, MeQuery>(
-              cache,
-              { query: MeDocument },
-              _result,
-              (result, query) => {
-                if (result.register.errors) {
-                  return query;
-                } else {
-                  return {
-                    me: result.register.user,
-                  };
-                }
-              }
-            );
-          },
-        },
-      },
-    }),
-    fetchExchange,
-  ],
-});
+import theme from "../theme";
 
 function MyApp({ Component, pageProps }: AppProps) {
   return (
-    <Provider value={client}>
-      <ChakraProvider resetCSS theme={theme}>
-        <Component {...pageProps} />
-      </ChakraProvider>
-    </Provider>
+    <ChakraProvider resetCSS theme={theme}>
+      <Component {...pageProps} />
+    </ChakraProvider>
   );
 }
 
